@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"/>
+    <meta name="theme-color" content="#0d0d0d"/>
+    <meta name="description" content="Transform your text with 5 natural AI-powered rewrites. Your tone. Your region."/>
+    
+    <meta name="apple-mobile-web-app-capable" content="yes"/>
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+    <meta name="apple-mobile-web-app-title" content="Rewriter"/>
+    <link rel="apple-touch-icon" href="icons/icon-192.png"/>
+    
+    <link rel="manifest" href="manifest.json"/>
+    <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-192.png"/>
+    <link rel="icon" type="image/png" sizes="16x16" href="icons/icon-192.png"/>
+    
+    <title>Rewriter</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;800&family=DM+Mono&display=swap" rel="stylesheet"/>
+    <script src="https://cdn.tailwindcss.com" defer></script>
+
+    <style>
+        body { 
+            font-family: 'Syne', sans-serif; 
+            background-color: #0d0d0d; 
+            color: #f0f0f0;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .mono { font-family: 'DM Mono', monospace; }
+        
+        .custom-scroll::-webkit-scrollbar { width: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 10px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-up { animation: fadeUp 0.4s ease forwards; }
+
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(200, 245, 90, 0.4); }
+            50% { box-shadow: 0 0 20px 5px rgba(200, 245, 90, 0.2); }
+        }
+        .pulse-glow { animation: pulse-glow 2s infinite; }
+
+        .touch-target {
+            min-height: 44px;
+            min-width: 44px;
+        }
+
+        @media (hover: none) {
+            .hover-lift:hover { transform: none; }
+        }
+    </style>
+</head>
+<body class="antialiased min-h-screen safe-area-inset">
+
+    <header class="fixed top-0 left-0 right-0 bg-[#0d0d0d]/90 backdrop-blur-md z-50 border-b border-[#1f1f1f]">
+        <div class="max-w-2xl mx-auto p-4 md:p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <span class="inline-block border border-[#c8f55a] text-[#c8f55a] text-[10px] px-2 py-0.5 rounded mb-2 mono uppercase tracking-widest">✦ AI Rewriter</span>
+                    <h1 class="text-2xl md:text-4xl font-extrabold leading-none tracking-tight">Rewrite. <span class="text-[#c8f55a]">Better.</span></h1>
+                    <p class="text-gray-500 text-xs mt-1 hidden sm:block">5 natural rewrites. Your tone. Your region.</p>
+                </div>
+                <div id="online-indicator" class="hidden sm:flex items-center gap-1.5 text-[10px] mono">
+                    <span class="w-2 h-2 rounded-full bg-[#c8f55a]"></span>
+                    <span class="text-gray-500">Online</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-2xl mx-auto pt-28 md:pt-36 px-4 pb-24">
+        
+        <div id="install-banner-android" class="hidden items-center justify-between bg-[#161616] border border-[#c8f55a] p-4 rounded-xl mb-6 animate-fade-up">
+            <div class="text-sm">
+                <p class="font-bold">Add to Home Screen</p>
+                <p class="text-[11px] text-gray-500 mono">Use as a native app — works offline</p>
+            </div>
+            <button id="install-btn" class="bg-[#c8f55a] text-black px-4 py-2 rounded-lg font-bold text-xs uppercase touch-target">Install</button>
+        </div>
+        
+        <div id="install-banner-ios" class="hidden bg-[#161616] border border-[#c8f55a] p-4 rounded-xl mb-6 animate-fade-up">
+            <div class="flex items-start gap-3">
+                <div class="text-2xl">📱</div>
+                <div class="flex-1">
+                    <p class="font-bold text-sm">Add to Home Screen</p>
+                    <ol class="text-[11px] text-gray-400 mono mt-2 space-y-1">
+                        <li>1. Tap <span class="text-white bg-[#2a2a2a] px-1.5 py-0.5 rounded">⎘</span> Share</li>
+                        <li>2. Scroll down, tap <span class="text-white">Add to Home Screen</span></li>
+                        <li>3. Tap <span class="text-white">Add</span></li>
+                    </ol>
+                </div>
+                <button onclick="app.dismissIOSBanner()" class="text-gray-500 hover:text-white text-lg touch-target">✕</button>
+            </div>
+        </div>
+        
+        <div class="flex bg-[#161616] p-1 rounded-xl mb-6 border border-[#2a2a2a]" role="tablist">
+            <button onclick="app.switchTab('rewrite')" id="tab-rewrite" class="flex-1 py-2.5 rounded-lg bg-[#1f1f1f] text-white font-semibold transition-all touch-target" role="tab" aria-selected="true">Rewrite</button>
+            <button onclick="app.switchTab('saved')" id="tab-saved" class="flex-1 py-2.5 rounded-lg text-gray-500 font-semibold transition-all touch-target" role="tab" aria-selected="false">Saved</button>
+        </div>
+
+        <section id="rewrite-section" class="space-y-4 animate-fade-up" role="tabpanel">
+            <div class="bg-[#161616] p-4 md:p-5 rounded-2xl border border-[#2a2a2a]">
+                <label for="sentence" class="block text-[10px] mono text-gray-500 uppercase mb-2 tracking-widest">Your Sentence</label>
+                <textarea id="sentence" class="w-full bg-[#1f1f1f] border border-[#2a2a2a] rounded-xl p-4 text-white focus:border-[#c8f55a] outline-none transition-colors resize-none" rows="4" placeholder="Type or paste your sentence here..."></textarea>
+
+                <div class="grid grid-cols-2 gap-3 md:gap-4 mt-4">
+                    <div class="relative">
+                        <label for="region" class="block text-[10px] mono text-gray-500 uppercase mb-2 tracking-widest">Region</label>
+                        <select id="region" class="w-full bg-[#1f1f1f] border border-[#2a2a2a] rounded-xl p-3 pr-8 outline-none cursor-pointer appearance-none text-sm">
+                            <option value="USA">🇺🇸 USA</option>
+                            <option value="UK">🇬🇧 UK</option>
+                        </select>
+                        <svg class="absolute right-3 bottom-4 w-4 h-4 pointer-events-none text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </div>
+                    <div class="relative">
+                        <label for="tone" class="block text-[10px] mono text-gray-500 uppercase mb-2 tracking-widest">Tone</label>
+                        <select id="tone" class="w-full bg-[#1f1f1f] border border-[#2a2a2a] rounded-xl p-3 pr-8 outline-none cursor-pointer appearance-none text-sm">
+                            <option value="casual">Casual</option>
+                            <option value="professional">Professional</option>
+                            <option value="formal">Formal</option>
+                            <option value="friendly">Friendly</option>
+                            <option value="persuasive">Persuasive</option>
+                        </select>
+                        <svg class="absolute right-3 bottom-4 w-4 h-4 pointer-events-none text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </div>
+                </div>
+
+                <button id="rewrite-btn" class="w-full mt-6 bg-[#c8f55a] text-black font-extrabold py-4 rounded-xl hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-3 touch-target" type="button">
+                    <div id="spinner" class="hidden w-5 h-5 border-2 border-black/20 border-t-black rounded-full animate-spin"></div>
+                    <span id="btn-label" class="tracking-widest uppercase text-sm">Rewrite →</span>
+                </button>
+            </div>
+
+            <div id="results-section" class="hidden bg-[#161616] p-4 md:p-5 rounded-2xl border border-[#2a2a2a] animate-fade-up">
+                <div class="flex justify-between items-center mb-4">
+                    <span class="text-[10px] mono text-gray-500 uppercase tracking-widest">5 Rewrites</span>
+                    <button onclick="app.saveAll()" class="text-[#5af5c8] text-[10px] font-bold border border-[#5af5c8]/30 px-3 py-1.5 rounded-lg hover:bg-[#5af5c8] hover:text-black transition-all touch-target">↓ SAVE ALL</button>
+                </div>
+                <div id="results-list" class="space-y-3"></div>
+            </div>
+        </section>
+
+        <section id="saved-section" class="hidden animate-fade-up" role="tabpanel">
+            <div class="bg-[#161616] p-4 md:p-5 rounded-2xl border border-[#2a2a2a]">
+                <div class="flex justify-between items-center mb-4 md:mb-6">
+                    <span class="text-[10px] mono text-gray-500 uppercase tracking-widest">Saved Library</span>
+                    <div class="flex gap-2">
+                        <button onclick="app.loadSaved()" class="text-gray-500 text-[10px] font-bold border border-gray-700 px-3 py-1.5 rounded-lg hover:border-gray-500 transition-all touch-target">↺ Refresh</button>
+                        <button onclick="app.clearSaved()" class="text-red-400/50 text-[10px] font-bold border border-red-900/30 px-3 py-1.5 rounded-lg hover:border-red-500 hover:text-red-400 transition-all touch-target">Clear All</button>
+                    </div>
+                </div>
+                <div id="saved-list" class="space-y-4 max-h-[60vh] overflow-y-auto custom-scroll pr-2"></div>
+            </div>
+        </section>
+
+    </main>
+
+    <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-[#c8f55a] text-black px-6 py-3 rounded-full mono text-xs font-bold shadow-2xl transition-all opacity-0 translate-y-4 pointer-events-none z-[100]" role="alert" aria-live="polite"></div>
+
+    <div id="offline-toast" class="fixed top-20 left-1/2 -translate-x-1/2 bg-red-500 text-white px-4 py-2 rounded-lg mono text-xs font-bold shadow-lg transition-all opacity-0 -translate-y-2 pointer-events-none z-[100] flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636a9 9 0 010 12.728m0 0l-2.829-2.829m2.829 2.829L21 21M15.536 8.464a5 5 0 010 7.072m0 0l-2.829-2.829m-4.243 2.829a4.978 4.978 0 01-1.414-2.83m-1.414 5.658a9 9 0 01-2.167-9.238m7.824 2.167a1 1 0 111.414 1.414m-1.414-1.414L3 3"/></svg>
+        <span>You are offline</span>
+    </div>
+
+    <script>
+        const API = 'https://helpertool.chaserice.workers.dev/';
+
+        const App = {
+            lastResult: null,
+            installPrompt: null,
+            isOnline: navigator.onLine,
+
+            init() {
+                this.registerServiceWorker();
+                this.bindEvents();
+                this.checkURLParams();
+                this.updateOnlineStatus();
+            },
+
+            registerServiceWorker() {
+                if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.register('sw.js')
+                        .then((registration) => {
+                            console.log('[App] SW registered:', registration.scope);
+                            registration.addEventListener('updatefound', () => {
+                                const newWorker = registration.installing;
+                                newWorker.addEventListener('statechange', () => {
+                                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                        this.showUpdateToast();
+                                    }
+                                });
+                            });
+                        })
+                        .catch((err) => console.error('[App] SW registration failed:', err));
+                }
+            },
+
+            showUpdateToast() {
+                this.toast('New version available! Refresh to update.', false);
+            },
+
+            bindEvents() {
+                document.getElementById('rewrite-btn').addEventListener('click', () => this.rewrite());
+                
+                document.getElementById('sentence').addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' && e.ctrlKey) {
+                        this.rewrite();
+                    }
+                });
+
+                document.getElementById('install-btn').addEventListener('click', () => this.installPWA());
+
+                window.addEventListener('beforeinstallprompt', (e) => {
+                    e.preventDefault();
+                    this.installPrompt = e;
+                    const banner = document.getElementById('install-banner-android');
+                    banner.classList.remove('hidden');
+                    banner.classList.add('flex');
+                });
+
+                window.addEventListener('appinstalled', () => {
+                    this.installPrompt = null;
+                    document.getElementById('install-banner-android').classList.add('hidden');
+                    this.toast('Installed successfully!');
+                });
+                
+                this.detectISIos();
+
+                window.addEventListener('online', () => this.updateOnlineStatus());
+                window.addEventListener('offline', () => this.updateOnlineStatus());
+
+                document.addEventListener('visibilitychange', () => {
+                    if (document.visibilityState === 'visible' && this.isOnline) {
+                        this.loadSaved();
+                    }
+                });
+            },
+
+            updateOnlineStatus() {
+                this.isOnline = navigator.onLine;
+                const indicator = document.getElementById('online-indicator');
+                const offlineToast = document.getElementById('offline-toast');
+
+                if (this.isOnline) {
+                    indicator.innerHTML = '<span class="w-2 h-2 rounded-full bg-[#c8f55a]"></span><span class="text-gray-500">Online</span>';
+                    offlineToast.classList.add('opacity-0', '-translate-y-2', 'pointer-events-none');
+                    offlineToast.classList.remove('opacity-100', 'translate-y-0');
+                } else {
+                    indicator.innerHTML = '<span class="w-2 h-2 rounded-full bg-red-500"></span><span class="text-red-500">Offline</span>';
+                    offlineToast.classList.remove('opacity-0', '-translate-y-2', 'pointer-events-none');
+                    offlineToast.classList.add('opacity-100', 'translate-y-0');
+                    setTimeout(() => {
+                        offlineToast.classList.add('opacity-0', '-translate-y-2', 'pointer-events-none');
+                    }, 3000);
+                }
+            },
+
+            isIos() {
+                return [
+                    'iPad Simulator',
+                    'iPhone Simulator',
+                    'iPod Simulator',
+                    'iPad',
+                    'iPhone',
+                    'iPod'
+                ].includes(navigator.platform) || (navigator.userAgent.includes('Mac') && 'ontouchend' in document);
+            },
+
+            detectISIos() {
+                if (this.isIos() && !window.matchMedia('(display-mode: standalone)').matches) {
+                    const dismissed = localStorage.getItem('ios-banner-dismissed');
+                    if (!dismissed) {
+                        const banner = document.getElementById('install-banner-ios');
+                        banner.classList.remove('hidden');
+                    }
+                }
+            },
+
+            dismissIOSBanner() {
+                localStorage.setItem('ios-banner-dismissed', 'true');
+                document.getElementById('install-banner-ios').classList.add('hidden');
+            },
+
+            checkURLParams() {
+                const params = new URLSearchParams(window.location.search);
+                const action = params.get('action');
+                if (action === 'saved') {
+                    this.switchTab('saved');
+                }
+            },
+
+            switchTab(name) {
+                const isRewrite = name === 'rewrite';
+                
+                document.getElementById('rewrite-section').classList.toggle('hidden', !isRewrite);
+                document.getElementById('saved-section').classList.toggle('hidden', isRewrite);
+                
+                const rTab = document.getElementById('tab-rewrite');
+                const sTab = document.getElementById('tab-saved');
+
+                rTab.className = isRewrite 
+                    ? 'flex-1 py-2.5 rounded-lg bg-[#1f1f1f] text-white font-semibold' 
+                    : 'flex-1 py-2.5 rounded-lg text-gray-500 font-semibold';
+                sTab.className = !isRewrite 
+                    ? 'flex-1 py-2.5 rounded-lg bg-[#1f1f1f] text-white font-semibold' 
+                    : 'flex-1 py-2.5 rounded-lg text-gray-500 font-semibold';
+
+                rTab.setAttribute('aria-selected', isRewrite);
+                sTab.setAttribute('aria-selected', !isRewrite);
+
+                if (name === 'saved') this.loadSaved();
+            },
+
+            toast(msg, isError = false) {
+                const t = document.getElementById('toast');
+                t.textContent = msg;
+                t.style.backgroundColor = isError ? '#f55a5a' : '#c8f55a';
+                t.style.color = isError ? '#fff' : '#000';
+                
+                t.classList.remove('opacity-0', 'translate-y-4', 'pointer-events-none');
+                t.classList.add('opacity-100', 'translate-y-0');
+                
+                clearTimeout(this._toastTimeout);
+                this._toastTimeout = setTimeout(() => {
+                    t.classList.add('opacity-0', 'translate-y-4', 'pointer-events-none');
+                }, 2500);
+            },
+
+            async rewrite() {
+                const sentence = document.getElementById('sentence').value.trim();
+                if (!sentence) {
+                    this.toast('Please enter a sentence.', true);
+                    document.getElementById('sentence').focus();
+                    return;
+                }
+
+                const btn = document.getElementById('rewrite-btn');
+                const spinner = document.getElementById('spinner');
+                const label = document.getElementById('btn-label');
+
+                btn.disabled = true;
+                spinner.classList.remove('hidden');
+                label.textContent = 'Rewriting...';
+
+                try {
+                    const res = await fetch(API, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                            sentence, 
+                            region: document.getElementById('region').value, 
+                            tone: document.getElementById('tone').value 
+                        })
+                    });
+
+                    if (!res.ok) throw new Error('Network response was not ok');
+
+                    const data = await res.json();
+                    if (!data.success) throw new Error(data.message || 'API error');
+
+                    this.lastResult = { 
+                        original: sentence, 
+                        alternatives: data.suggestions, 
+                        tone: document.getElementById('tone').value, 
+                        region: document.getElementById('region').value,
+                        timestamp: Date.now()
+                    };
+                    
+                    this.renderResults(data.suggestions);
+                    document.getElementById('results-section').classList.remove('hidden');
+                    document.getElementById('results-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                } catch (error) {
+                    console.error('[App] Rewrite error:', error);
+                    this.toast(this.isOnline ? 'Network error. Try again.' : 'You are offline. Connect to rewrite.', true);
+                } finally {
+                    btn.disabled = false;
+                    spinner.classList.add('hidden');
+                    label.textContent = 'Rewrite →';
+                }
+            },
+
+            renderResults(suggestions) {
+                document.getElementById('results-list').innerHTML = suggestions.map((text, i) => {
+                    const num = `0${i + 1}`.slice(-2);
+                    const escapedText = this.escapeHtml(text);
+                    return `
+                        <div class="flex items-start gap-3 md:gap-4 p-3 md:p-4 bg-[#1f1f1f] rounded-xl border border-[#2a2a2a] group transition-all hover:border-[#c8f55a]/30">
+                            <span class="mono text-[10px] text-[#c8f55a] pt-1 shrink-0">${num}</span>
+                            <p class="flex-1 text-sm leading-relaxed">${escapedText}</p>
+                            <button onclick="app.copyText(this, '${escapedText.replace(/'/g, "\\'")}')" class="text-gray-500 hover:text-[#c8f55a] transition-colors text-lg touch-target shrink-0 flex items-center justify-center" aria-label="Copy to clipboard">⎘</button>
+                        </div>
+                    `;
+                }).join('');
+            },
+
+            escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            },
+
+            copyText(btn, text) {
+                navigator.clipboard.writeText(text).then(() => {
+                    const original = btn.textContent;
+                    btn.textContent = '✓';
+                    btn.classList.add('text-[#c8f55a]');
+                    setTimeout(() => {
+                        btn.textContent = original;
+                        btn.classList.remove('text-[#c8f55a]');
+                    }, 1500);
+                }).catch(() => {
+                    this.toast('Copy failed', true);
+                });
+            },
+
+            async saveAll() {
+                if (!this.lastResult) return;
+
+                try {
+                    const res = await fetch(API, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: 'save', ...this.lastResult })
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        this.toast('Saved to Library!');
+                    } else {
+                        throw new Error();
+                    }
+                } catch {
+                    if (!this.isOnline) {
+                        this.queueOfflineSave(this.lastResult);
+                        this.toast('Saved offline. Will sync when online.');
+                    } else {
+                        this.toast('Save failed.', true);
+                    }
+                }
+            },
+
+            async queueOfflineSave(data) {
+                const cache = await caches.open('rewriter-v1.0.0');
+                let pending = [];
+                const existing = await cache.match('pending-sync');
+                if (existing) {
+                    pending = await existing.json();
+                }
+                pending.push(data);
+                await cache.put('pending-sync', new Response(JSON.stringify(pending)));
+                
+                if ('sync' in registration) {
+                    await registration.sync.register('sync-saved');
+                }
+            },
+
+            async loadSaved() {
+                const list = document.getElementById('saved-list');
+                list.innerHTML = '<div class="text-center py-10 animate-pulse mono text-xs text-gray-600">Syncing...</div>';
+                
+                try {
+                    const res = await fetch(API + '?action=list');
+                    const data = await res.json();
+                    
+                    if (!data.saved?.length) {
+                        list.innerHTML = '<div class="text-center text-gray-600 py-10 mono text-xs">No saved rewrites yet.</div>';
+                        return;
+                    }
+
+                    list.innerHTML = data.saved.map((item, index) => {
+                        const original = this.escapeHtml(item.original);
+                        let alternatives;
+                        try {
+                            alternatives = JSON.parse(item.alternatives);
+                        } catch {
+                            alternatives = [item.alternatives];
+                        }
+                        return `
+                            <div class="p-4 bg-[#1f1f1f] rounded-xl border border-[#2a2a2a] relative group">
+                                <button onclick="app.deleteSaved(${index}, '${original.replace(/'/g, "\\'")}')" class="absolute top-2 right-2 text-gray-600 hover:text-red-500 transition-colors text-sm opacity-0 group-hover:opacity-100 touch-target" aria-label="Delete">✕</button>
+                                <p class="text-[11px] mono text-gray-600 italic mb-3 pr-6">"${original}"</p>
+                                <div class="space-y-2 border-l-2 border-[#2a2a2a] pl-3">
+                                    ${alternatives.map(a => `<p class="text-xs text-gray-400 leading-relaxed">${this.escapeHtml(a)}</p>`).join('')}
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                } catch {
+                    list.innerHTML = '<div class="text-center text-red-500 py-10 mono text-xs">Error loading database.</div>';
+                }
+            },
+
+            async clearSaved() {
+                if (!confirm('Clear all saved rewrites?')) return;
+                this.toast('Library cleared');
+                document.getElementById('saved-list').innerHTML = '<div class="text-center text-gray-600 py-10 mono text-xs">No saved rewrites yet.</div>';
+            },
+
+            async deleteSaved(index, original) {
+                const list = document.getElementById('saved-list');
+                const items = list.querySelectorAll('.bg-\\[\\#1f1f1f\\]');
+                if (items[index]) {
+                    items[index].style.opacity = '0';
+                    items[index].style.transform = 'translateX(-20px)';
+                    setTimeout(() => {
+                        items[index].remove();
+                        if (list.children.length === 0) {
+                            list.innerHTML = '<div class="text-center text-gray-600 py-10 mono text-xs">No saved rewrites yet.</div>';
+                        }
+                    }, 200);
+                }
+                this.toast('Deleted');
+            },
+
+            async installPWA() {
+                if (this.isIos()) {
+                    this.toast('Use Safari to add to Home Screen');
+                    return;
+                }
+                if (!this.installPrompt) return;
+                this.installPrompt.prompt();
+                const { outcome } = await this.installPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    this.toast('Installing...');
+                }
+                this.installPrompt = null;
+                document.getElementById('install-banner-android').classList.add('hidden');
+            }
+        };
+
+        const app = App;
+        document.addEventListener('DOMContentLoaded', () => app.init());
+    </script>
+</body>
+</html>

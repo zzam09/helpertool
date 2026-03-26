@@ -1,0 +1,53 @@
+{
+  "name": "Rewriter - AI Text Enhancement",
+  "short_name": "Rewriter",
+  "description": "Transform your text with 5 natural AI-powered rewrites. Your tone. Your region.",
+  "start_url": "./rewriteter.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0d0d0d",
+  "theme_color": "#0d0d0d",
+  "orientation": "portrait-primary",
+  "lang": "en",
+  "categories": ["productivity", "utilities"],
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "New Rewrite",
+      "short_name": "Rewrite",
+      "description": "Start a new text rewrite",
+      "url": "./rewriteter.html?action=rewrite"
+    },
+    {
+      "name": "Saved Library",
+      "short_name": "Library",
+      "description": "View saved rewrites",
+      "url": "./rewriteter.html?action=saved"
+    }
+  ]
+}
