@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CMS Engine — Schema Playground</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface2: #1a1a24;
+    --border: #2a2a38;
+    --accent: #7c6aff;
+    --accent2: #ff6a8a;
+    --accent3: #6affb8;
+    --text: #e8e8f0;
+    --muted: #666680;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Syne', sans-serif;
+  }
+
+- { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+background: var(–bg);
+color: var(–text);
+font-family: var(–sans);
+min-height: 100vh;
+overflow-x: hidden;
+}
+
+/* noise overlay */
+body::before {
+content: ‘’;
+position: fixed;
+inset: 0;
+background-image: url(“data:image/svg+xml,%3Csvg viewBox=‘0 0 256 256’ xmlns=‘http://www.w3.org/2000/svg’%3E%3Cfilter id=‘noise’%3E%3CfeTurbulence type=‘fractalNoise’ baseFrequency=‘0.9’ numOctaves=‘4’ stitchTiles=‘stitch’/%3E%3C/filter%3E%3Crect width=‘100%25’ height=‘100%25’ filter=‘url(%23noise)’ opacity=‘0.04’/%3E%3C/svg%3E”);
+pointer-events: none;
+z-index: 0;
+opacity: 0.5;
+}
+
+/* ── HEADER ── */
+header {
+position: sticky; top: 0; z-index: 100;
+background: rgba(10,10,15,0.85);
+backdrop-filter: blur(16px);
+border-bottom: 1px solid var(–border);
+padding: 0 20px;
+display: flex; align-items: center; justify-content: space-between;
+height: 56px;
+}
+
+.logo {
+font-size: 13px; font-weight: 700; letter-spacing: .12em;
+text-transform: uppercase; color: var(–accent);
+display: flex; align-items: center; gap: 8px;
+}
+.logo-dot {
+width: 8px; height: 8px; border-radius: 50%;
+background: var(–accent3);
+animation: pulse 2s infinite;
+}
+@keyframes pulse {
+0%,100% { opacity:1; transform:scale(1); }
+50% { opacity:.4; transform:scale(.7); }
+}
+
+.header-badge {
+font-family: var(–mono);
+font-size: 11px; color: var(–muted);
+background: var(–surface2);
+border: 1px solid var(–border);
+padding: 4px 10px; border-radius: 20px;
+}
+
+/* ── MAIN LAYOUT ── */
+.container {
+position: relative; z-index: 1;
+max-width: 1100px;
+margin: 0 auto;
+padding: 24px 16px 80px;
+}
+
+.hero {
+text-align: center;
+padding: 40px 0 32px;
+animation: fadeUp .6s ease both;
+}
+@keyframes fadeUp {
+from { opacity:0; transform:translateY(20px); }
+to   { opacity:1; transform:translateY(0); }
+}
+
+.hero h1 {
+font-size: clamp(28px, 6vw, 52px);
+font-weight: 800; line-height: 1.1;
+letter-spacing: -.02em;
+background: linear-gradient(135deg, #fff 30%, var(–accent) 70%, var(–accent2));
+-webkit-background-clip: text; -webkit-text-fill-color: transparent;
+background-clip: text;
+}
+.hero p {
+margin-top: 12px;
+color: var(–muted); font-size: 15px; font-family: var(–mono);
+}
+
+/* ── PANELS ── */
+.grid {
+display: grid;
+grid-template-columns: 1fr 1fr;
+gap: 16px;
+margin-top: 28px;
+}
+@media (max-width: 680px) {
+.grid { grid-template-columns: 1fr; }
+}
+
+.panel {
+background: var(–surface);
+border: 1px solid var(–border);
+border-radius: 14px;
+overflow: hidden;
+animation: fadeUp .6s ease both;
+}
+.panel:nth-child(2) { animation-delay:.1s; }
+
+.panel-header {
+padding: 14px 18px;
+border-bottom: 1px solid var(–border);
+display: flex; align-items: center; justify-content: space-between;
+}
+.panel-title {
+font-size: 11px; font-weight: 700;
+letter-spacing: .1em; text-transform: uppercase;
+color: var(–muted);
+display: flex; align-items: center; gap: 8px;
+}
+.panel-title span { color: var(–accent); font-size: 14px; }
+
+.panel-body { padding: 18px; }
+
+/* ── SCHEMA EDITOR ── */
+#schemaInput {
+width: 100%;
+min-height: 260px;
+background: var(–bg);
+border: 1px solid var(–border);
+border-radius: 10px;
+color: var(–accent3);
+font-family: var(–mono);
+font-size: 12px;
+line-height: 1.7;
+padding: 14px;
+resize: vertical;
+outline: none;
+transition: border-color .2s;
+}
+#schemaInput:focus { border-color: var(–accent); }
+
+.btn {
+display: inline-flex; align-items: center; gap: 8px;
+padding: 10px 20px;
+border-radius: 8px;
+border: none; cursor: pointer;
+font-family: var(–sans); font-size: 13px; font-weight: 600;
+letter-spacing: .04em;
+transition: all .2s;
+}
+.btn-primary {
+background: var(–accent);
+color: #fff;
+}
+.btn-primary:hover { background: #9580ff; transform: translateY(-1px); }
+.btn-secondary {
+background: var(–surface2);
+color: var(–text);
+border: 1px solid var(–border);
+}
+.btn-secondary:hover { border-color: var(–accent); }
+
+.btn-row {
+display: flex; gap: 10px; flex-wrap: wrap;
+margin-top: 14px;
+}
+
+/* ── GENERATED OUTPUT ── */
+.output-tabs {
+display: flex; gap: 4px;
+padding: 10px 18px 0;
+}
+.tab {
+font-family: var(–mono);
+font-size: 11px; font-weight: 600;
+padding: 6px 14px;
+border-radius: 6px 6px 0 0;
+border: 1px solid transparent;
+cursor: pointer;
+color: var(–muted);
+transition: all .15s;
+}
+.tab.active {
+background: var(–surface2);
+border-color: var(–border);
+color: var(–text);
+}
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+pre {
+background: var(–bg);
+border: 1px solid var(–border);
+border-radius: 10px;
+padding: 14px;
+font-family: var(–mono);
+font-size: 11.5px;
+line-height: 1.7;
+overflow-x: auto;
+color: var(–text);
+max-height: 280px;
+overflow-y: auto;
+white-space: pre-wrap;
+}
+
+.keyword { color: var(–accent); }
+.string  { color: var(–accent3); }
+.number  { color: var(–accent2); }
+.key     { color: #a8c4ff; }
+
+/* ── DATA TABLE ── */
+.data-section {
+grid-column: 1 / -1;
+animation: fadeUp .6s .2s ease both;
+}
+
+.table-wrap { overflow-x: auto; }
+
+table {
+width: 100%; border-collapse: collapse;
+font-family: var(–mono); font-size: 12px;
+}
+th {
+text-align: left;
+padding: 10px 14px;
+background: var(–surface2);
+color: var(–accent);
+font-size: 10px; letter-spacing: .1em; text-transform: uppercase;
+border-bottom: 1px solid var(–border);
+white-space: nowrap;
+}
+td {
+padding: 10px 14px;
+border-bottom: 1px solid rgba(42,42,56,.6);
+color: var(–text);
+max-width: 200px;
+overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+tr:hover td { background: rgba(124,106,255,.04); }
+
+.badge {
+display: inline-block;
+padding: 2px 8px; border-radius: 20px;
+font-size: 10px; font-weight: 700;
+}
+.badge-true  { background: rgba(106,255,184,.15); color: var(–accent3); }
+.badge-false { background: rgba(255,106,138,.1);  color: var(–accent2); }
+
+/* ── API ROUTES ── */
+.route {
+display: flex; align-items: center; gap: 12px;
+padding: 10px 14px;
+border-bottom: 1px solid var(–border);
+font-family: var(–mono); font-size: 12px;
+}
+.route:last-child { border-bottom: none; }
+.method {
+font-weight: 700; font-size: 10px;
+padding: 3px 8px; border-radius: 4px; min-width: 50px; text-align: center;
+}
+.GET    { background: rgba(106,255,184,.15); color: var(–accent3); }
+.POST   { background: rgba(124,106,255,.2);  color: var(–accent); }
+.PUT    { background: rgba(255,196,106,.15); color: #ffc46a; }
+.DELETE { background: rgba(255,106,138,.15); color: var(–accent2); }
+.route-path { color: var(–text); }
+.route-desc { color: var(–muted); font-size: 11px; margin-left: auto; }
+
+/* ── STATUS BAR ── */
+.status-bar {
+position: fixed; bottom: 0; left: 0; right: 0;
+height: 36px;
+background: rgba(10,10,15,.9);
+backdrop-filter: blur(12px);
+border-top: 1px solid var(–border);
+display: flex; align-items: center; gap: 24px;
+padding: 0 20px;
+font-family: var(–mono); font-size: 11px; color: var(–muted);
+z-index: 100;
+}
+.status-item { display: flex; align-items: center; gap: 6px; }
+.status-dot  { width: 6px; height: 6px; border-radius: 50%; }
+.green { background: var(–accent3); }
+.purple { background: var(–accent); }
+
+/* ── EMPTY STATE ── */
+.empty {
+text-align: center; padding: 40px 20px;
+color: var(–muted); font-size: 13px;
+font-family: var(–mono);
+}
+
+.schema-presets {
+display: flex; gap: 8px; flex-wrap: wrap;
+margin-bottom: 12px;
+}
+.preset-btn {
+font-family: var(–mono); font-size: 11px;
+padding: 4px 12px; border-radius: 20px;
+border: 1px solid var(–border);
+background: transparent; color: var(–muted);
+cursor: pointer; transition: all .15s;
+}
+.preset-btn:hover { border-color: var(–accent); color: var(–accent); }
+
+.count-badge {
+background: var(–accent);
+color: #fff; font-size: 10px; font-weight: 700;
+padding: 2px 7px; border-radius: 20px;
+font-family: var(–mono);
+}
+</style>
+
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-dot"></div>
+    CMS Engine
+  </div>
+  <div class="header-badge">faker mode · v0.1</div>
+</header>
+
+<div class="container">
+  <div class="hero">
+    <h1>Paste Schema.<br>Get Everything.</h1>
+    <p>// auto-generates API · fake data · dashboard · db schema</p>
+  </div>
+
+  <div class="grid">
+
+```
+<!-- SCHEMA INPUT -->
+<div class="panel">
+  <div class="panel-header">
+    <div class="panel-title"><span>✦</span> JSON Schema</div>
+  </div>
+  <div class="panel-body">
+    <div class="schema-presets">
+      <button class="preset-btn" onclick="loadPreset('product')">Product</button>
+      <button class="preset-btn" onclick="loadPreset('blog')">Blog Post</button>
+      <button class="preset-btn" onclick="loadPreset('user')">User</button>
+      <button class="preset-btn" onclick="loadPreset('order')">Order</button>
+    </div>
+    <textarea id="schemaInput" spellcheck="false" placeholder='Paste your schema here...'></textarea>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="generateAll()">⚡ Generate</button>
+      <button class="btn btn-secondary" onclick="clearAll()">Clear</button>
+    </div>
+  </div>
+</div>
+
+<!-- GENERATED CODE -->
+<div class="panel">
+  <div class="panel-header">
+    <div class="panel-title"><span>◈</span> Generated Output</div>
+  </div>
+  <div class="output-tabs">
+    <div class="tab active" onclick="switchTab('api')">API Routes</div>
+    <div class="tab" onclick="switchTab('schema')">DB Schema</div>
+    <div class="tab" onclick="switchTab('express')">Express Code</div>
+  </div>
+  <div class="panel-body">
+    <div id="tab-api" class="tab-content active">
+      <div id="routesList" class="empty">// generate a schema to see routes</div>
+    </div>
+    <div id="tab-schema" class="tab-content">
+      <pre id="dbSchemaOutput">// generate a schema first</pre>
+    </div>
+    <div id="tab-express" class="tab-content">
+      <pre id="expressOutput">// generate a schema first</pre>
+    </div>
+  </div>
+</div>
+
+<!-- FAKE DATA TABLE -->
+<div class="panel data-section">
+  <div class="panel-header">
+    <div class="panel-title"><span>◉</span> Fake Data Preview</div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <span id="rowCount" class="count-badge">0 rows</span>
+      <button class="btn btn-secondary" style="padding:5px 12px;font-size:12px" onclick="regenerateData()">↻ Regenerate</button>
+    </div>
+  </div>
+  <div class="panel-body" style="padding:0">
+    <div class="table-wrap">
+      <div id="tableOutput" class="empty" style="padding:40px">// paste a schema and hit Generate</div>
+    </div>
+  </div>
+</div>
+```
+
+  </div>
+</div>
+
+<!-- STATUS BAR -->
+
+<div class="status-bar">
+  <div class="status-item">
+    <div class="status-dot green"></div>
+    <span id="statusModel">faker tool · active</span>
+  </div>
+  <div class="status-item">
+    <div class="status-dot purple"></div>
+    <span id="statusFields">0 fields parsed</span>
+  </div>
+  <div class="status-item">
+    <span id="statusTime">ready</span>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────
+// PRESETS
+// ─────────────────────────────────────────
+const PRESETS = {
+  product: {
+    name: "Product",
+    fields: [
+      { name: "id",          type: "id" },
+      { name: "title",       type: "string",  required: true },
+      { name: "price",       type: "number",  required: true },
+      { name: "description", type: "text" },
+      { name: "category",    type: "enum",    values: ["Electronics","Clothing","Books","Home"] },
+      { name: "inStock",     type: "boolean" },
+      { name: "createdAt",   type: "date" }
+    ]
+  },
+  blog: {
+    name: "Post",
+    fields: [
+      { name: "id",          type: "id" },
+      { name: "title",       type: "string",  required: true },
+      { name: "slug",        type: "slug" },
+      { name: "body",        type: "text" },
+      { name: "author",      type: "string" },
+      { name: "tags",        type: "array" },
+      { name: "published",   type: "boolean" },
+      { name: "createdAt",   type: "date" }
+    ]
+  },
+  user: {
+    name: "User",
+    fields: [
+      { name: "id",          type: "id" },
+      { name: "name",        type: "name",    required: true },
+      { name: "email",       type: "email",   required: true },
+      { name: "role",        type: "enum",    values: ["admin","editor","viewer"] },
+      { name: "avatar",      type: "url" },
+      { name: "active",      type: "boolean" },
+      { name: "joinedAt",    type: "date" }
+    ]
+  },
+  order: {
+    name: "Order",
+    fields: [
+      { name: "id",          type: "id" },
+      { name: "customer",    type: "name",    required: true },
+      { name: "total",       type: "number",  required: true },
+      { name: "status",      type: "enum",    values: ["pending","paid","shipped","delivered","cancelled"] },
+      { name: "items",       type: "number" },
+      { name: "address",     type: "string" },
+      { name: "createdAt",   type: "date" }
+    ]
+  }
+}
+
+function loadPreset(key) {
+  document.getElementById('schemaInput').value = JSON.stringify(PRESETS[key], null, 2)
+}
+
+// ─────────────────────────────────────────
+// FAKER TOOL
+// ─────────────────────────────────────────
+const fakerTool = {
+  id:      () => Math.random().toString(36).slice(2,10).toUpperCase(),
+  string:  (name) => {
+    const map = {
+      title:    () => pick(["Wireless Headphones","Smart Watch","Running Shoes","Desk Lamp","Keyboard"]),
+      category: () => pick(["Tech","Design","Life","Business"]),
+      address:  () => `${rand(10,999)} ${pick(["Oak","Main","Maple","Park"])} St`,
+      author:   () => fakeName(),
+      slug:     () => pick(["getting-started","deep-dive","quick-tips","full-guide"]),
+      default:  () => pick(["Alpha","Beta","Gamma","Delta","Epsilon"]) + " " + pick(["Pro","Plus","Max","Lite"])
+    }
+    return (map[name] || map.default)()
+  },
+  number:  (name) => {
+    if (name === 'price') return +(Math.random() * 200 + 9.99).toFixed(2)
+    if (name === 'items') return rand(1, 12)
+    if (name === 'total') return +(Math.random() * 500 + 19.99).toFixed(2)
+    return rand(1, 1000)
+  },
+  text:    () => pick([
+    "A carefully crafted product designed for modern needs.",
+    "Built with quality materials and attention to detail.",
+    "The perfect companion for your daily workflow.",
+    "Lightweight, durable, and surprisingly affordable."
+  ]),
+  boolean: () => Math.random() > 0.4,
+  date:    () => {
+    const d = new Date(Date.now() - Math.random() * 1e10)
+    return d.toISOString().split('T')[0]
+  },
+  email:   () => `${pick(["alex","sam","jordan","riley","morgan"])}${rand(10,99)}@${pick(["gmail","hey","fastmail"])}.com`,
+  name:    () => fakeName(),
+  url:     () => `https://i.pravatar.cc/150?u=${rand(1,100)}`,
+  enum:    (_, values) => values ? pick(values) : "option_a",
+  slug:    () => pick(["getting-started","deep-dive","quick-tips","full-guide","best-practices"]),
+  array:   () => pick(["tag1, tag2","tech, design","news, trending","tips, howto"]),
+}
+
+function fakeName() {
+  return `${pick(["Alex","Sam","Jordan","Riley","Morgan","Casey","Drew","Jamie"])} ${pick(["Smith","Johnson","Lee","Brown","Davis","Wilson","Garcia"])}`
+}
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)] }
+function rand(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min }
+
+function generateFakeRow(fields) {
+  const row = {}
+  fields.forEach(f => {
+    const gen = fakerTool[f.type] || fakerTool.string
+    row[f.name] = gen(f.name, f.values)
+  })
+  return row
+}
+
+// ─────────────────────────────────────────
+// SCHEMA PARSER
+// ─────────────────────────────────────────
+function parseSchema(raw) {
+  try { return JSON.parse(raw) }
+  catch(e) { alert("Invalid JSON. Check your schema."); return null }
+}
+
+// ─────────────────────────────────────────
+// API GENERATOR
+// ─────────────────────────────────────────
+function generateRoutes(schema) {
+  const n = schema.name.toLowerCase()
+  return [
+    { method: 'GET',    path: `/${n}s`,      desc: 'list all' },
+    { method: 'GET',    path: `/${n}s/:id`,  desc: 'get one' },
+    { method: 'POST',   path: `/${n}s`,      desc: 'create' },
+    { method: 'PUT',    path: `/${n}s/:id`,  desc: 'update' },
+    { method: 'DELETE', path: `/${n}s/:id`,  desc: 'delete' },
+  ]
+}
+
+function generateDBSchema(schema) {
+  const lines = [`CREATE TABLE ${schema.name.toLowerCase()}s (`]
+  schema.fields.forEach((f, i) => {
+    const comma = i < schema.fields.length - 1 ? ',' : ''
+    const typeMap = { id:'VARCHAR(10) PRIMARY KEY', string:'VARCHAR(255)', text:'TEXT', number:'DECIMAL(10,2)', boolean:'BOOLEAN', date:'DATE', email:'VARCHAR(255)', name:'VARCHAR(255)', url:'TEXT', enum:'VARCHAR(100)', slug:'VARCHAR(255)', array:'TEXT' }
+    const req = f.required ? ' NOT NULL' : ''
+    lines.push(`  ${f.name} ${typeMap[f.type]||'TEXT'}${req}${comma}`)
+  })
+  lines.push(');')
+  return lines.join('\n')
+}
+
+function generateExpressCode(schema) {
+  const n = schema.name.toLowerCase()
+  return `// Auto-generated by CMS Engine
+const express = require('express')
+const router = express.Router()
+
+// GET all ${n}s
+router.get('/${n}s', async (req, res) => {
+  const data = await req.db.find('${n}s')
+  res.json(data)
+})
+
+// GET one ${n}
+router.get('/${n}s/:id', async (req, res) => {
+  const item = await req.db.findById('${n}s', req.params.id)
+  if (!item) return res.status(404).json({ error: 'Not found' })
+  res.json(item)
+})
+
+// POST create ${n}
+router.post('/${n}s', async (req, res) => {
+  const item = await req.db.create('${n}s', req.body)
+  res.status(201).json(item)
+})
+
+// PUT update ${n}
+router.put('/${n}s/:id', async (req, res) => {
+  const item = await req.db.update('${n}s', req.params.id, req.body)
+  res.json(item)
+})
+
+// DELETE ${n}
+router.delete('/${n}s/:id', async (req, res) => {
+  await req.db.delete('${n}s', req.params.id)
+  res.status(204).end()
+})
+
+module.exports = router`
+}
+
+// ─────────────────────────────────────────
+// RENDER
+// ─────────────────────────────────────────
+let currentSchema = null
+
+function generateAll() {
+  const raw = document.getElementById('schemaInput').value.trim()
+  if (!raw) { alert('Paste a schema first'); return }
+
+  const schema = parseSchema(raw)
+  if (!schema) return
+  currentSchema = schema
+
+  const t0 = performance.now()
+
+  // routes
+  renderRoutes(schema)
+
+  // db schema
+  document.getElementById('dbSchemaOutput').innerHTML = syntaxHighlight(generateDBSchema(schema))
+
+  // express code
+  document.getElementById('expressOutput').textContent = generateExpressCode(schema)
+
+  // fake data
+  renderTable(schema, 10)
+
+  // status
+  const elapsed = (performance.now() - t0).toFixed(1)
+  document.getElementById('statusFields').textContent = `${schema.fields.length} fields parsed`
+  document.getElementById('statusTime').textContent = `generated in ${elapsed}ms`
+  document.getElementById('statusModel').textContent = `${schema.name} · faker tool · active`
+}
+
+function renderRoutes(schema) {
+  const routes = generateRoutes(schema)
+  const el = document.getElementById('routesList')
+  el.className = ''
+  el.innerHTML = routes.map(r => `
+    <div class="route">
+      <span class="method ${r.method}">${r.method}</span>
+      <span class="route-path">${r.path}</span>
+      <span class="route-desc">${r.desc}</span>
+    </div>
+  `).join('')
+}
+
+function renderTable(schema, count) {
+  const rows = Array.from({length: count}, () => generateFakeRow(schema.fields))
+  const el = document.getElementById('tableOutput')
+  el.className = ''
+
+  const headers = schema.fields.map(f => `<th>${f.name}</th>`).join('')
+  const bodyRows = rows.map(row => {
+    const cells = schema.fields.map(f => {
+      let val = row[f.name]
+      if (typeof val === 'boolean') {
+        val = `<span class="badge ${val ? 'badge-true' : 'badge-false'}">${val}</span>`
+      }
+      return `<td>${val}</td>`
+    }).join('')
+    return `<tr>${cells}</tr>`
+  }).join('')
+
+  el.innerHTML = `<table><thead><tr>${headers}</tr></thead><tbody>${bodyRows}</tbody></table>`
+  document.getElementById('rowCount').textContent = `${count} rows`
+}
+
+function regenerateData() {
+  if (!currentSchema) return
+  renderTable(currentSchema, 10)
+}
+
+function clearAll() {
+  document.getElementById('schemaInput').value = ''
+  document.getElementById('routesList').innerHTML = '<div class="empty">// generate a schema to see routes</div>'
+  document.getElementById('dbSchemaOutput').textContent = '// generate a schema first'
+  document.getElementById('expressOutput').textContent = '// generate a schema first'
+  document.getElementById('tableOutput').innerHTML = '<div class="empty" style="padding:40px">// paste a schema and hit Generate</div>'
+  document.getElementById('rowCount').textContent = '0 rows'
+  document.getElementById('statusFields').textContent = '0 fields parsed'
+  document.getElementById('statusTime').textContent = 'ready'
+  currentSchema = null
+}
+
+// ─────────────────────────────────────────
+// TABS
+// ─────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach((t,i) => {
+    t.classList.toggle('active', ['api','schema','express'][i] === name)
+  })
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'))
+  document.getElementById(`tab-${name}`).classList.add('active')
+}
+
+// ─────────────────────────────────────────
+// SYNTAX HIGHLIGHT (SQL)
+// ─────────────────────────────────────────
+function syntaxHighlight(sql) {
+  return sql
+    .replace(/\b(CREATE|TABLE|NOT|NULL|PRIMARY|KEY|VARCHAR|TEXT|DECIMAL|BOOLEAN|DATE)\b/g, '<span class="keyword">$1</span>')
+    .replace(/'([^']*)'/g, '<span class="string">\'$1\'</span>')
+    .replace(/\b(\d+)\b/g, '<span class="number">$1</span>')
+}
+
+// ─────────────────────────────────────────
+// BOOT — load product preset
+// ─────────────────────────────────────────
+window.onload = () => {
+  loadPreset('product')
+  generateAll()
+}
+</script>
+
+</body>
+</html>
